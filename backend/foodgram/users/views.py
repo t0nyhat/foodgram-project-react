@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from rest_framework import viewsets
+from djoser.views import UserViewSet
 
 from .serializers import UserSerializer
 
 User = get_user_model()
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
