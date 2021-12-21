@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -20,7 +21,13 @@ class User(AbstractUser):
     username = models.CharField(
         'username',
         unique=True,
-        max_length=150)
+        max_length=150,
+        validators=[
+            RegexValidator(
+                regex=r'^[\w.@+-]+\Z',
+                message='Unable to create a user',
+            ),
+        ])
 
     email = models.EmailField(
         'email',
@@ -51,3 +58,24 @@ class User(AbstractUser):
         ordering = ['username']
         verbose_name = 'User'
         verbose_name_plural = 'Users'
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="follower",
+        verbose_name='follower',
+        help_text='select user',
+    )
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="author",
+        verbose_name='autor',
+        help_text='select user',
+    )
+
+    class Meta:
+        verbose_name = "Subscription"
+        verbose_name_plural = "Subscriptions"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'author'], name='unique_follow_pair')
+        ]
