@@ -22,3 +22,21 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Ingredient(models.Model):
+    name = models.CharField(
+        verbose_name='Ingredient name',
+        max_length=200,
+        unique=True
+    )
+    measurement_unit = models.CharField(
+        verbose_name='Measurement unit',
+        max_length=200,
+    )
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return {self.name}
