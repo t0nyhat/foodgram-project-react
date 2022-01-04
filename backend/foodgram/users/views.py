@@ -1,14 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
 
 from .models import Follow
 from .paginator import Paginator
-from .serializers import FollowSerializer, FollowerSerializer, UserSerializer
+from .serializers import FollowerSerializer, FollowSerializer, UserSerializer
 
 User = get_user_model()
 
