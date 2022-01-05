@@ -27,8 +27,9 @@ class UserViewSet(UserViewSet):
     def subscriptions(self, request):
         queryset = Follow.objects.filter(follower=request.user)
         page = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(
-            page, many=True, context={'request': request}
+        recipes_limit = request.GET.get('recipes_limit', default=None)
+        serializer = FollowerSerializer(
+            page, many=True, context={'recipes_limit': recipes_limit}
         )
         return self.get_paginated_response(serializer.data)
 
@@ -45,15 +46,17 @@ class UserViewSet(UserViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        serializer = FollowerSerializer(author, context={'request': request})
+        queryset = Follow.objects.filter(follower=request.user, author=author)
+        serializer = FollowerSerializer(
+            queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id=None):
-        user = request.user
+        follower = request.user
         author = get_object_or_404(User, id=id)
         subscribe = get_object_or_404(
-            Follow, user=user, author=author
+            Follow, follower=follower, author=author
         )
         subscribe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
