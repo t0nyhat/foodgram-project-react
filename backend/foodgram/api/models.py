@@ -58,6 +58,7 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
+        related_name='recipes',
         through='IngredientAmount',
         verbose_name='Ingredients',
     )
@@ -114,5 +115,51 @@ class IngredientAmount(models.Model):
         verbose_name_plural = 'Количество ингридиентов'
         constraints = [
             models.UniqueConstraint(fields=['ingredient', 'recipe'],
-                                    name='unique ingredients recipe')
+                                    name='unique_receipe_ingredients')
+        ]
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='User',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Recipe',
+    )
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Favorite'
+        verbose_name_plural = 'Favorites'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_user_favoriterecipes')
+        ]
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='cart',
+        verbose_name='User',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='cart',
+        verbose_name='Recipe',
+    )
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Cart'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_cart_user_recipes')
         ]
