@@ -62,19 +62,19 @@ class User(AbstractUser):
 
 class Follow(models.Model):
     follower = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="follower",
+        User, on_delete=models.CASCADE, related_name='follower',
         verbose_name='follower',
         help_text='select user',
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="author",
+        User, on_delete=models.CASCADE, related_name='author',
         verbose_name='autor',
         help_text='select user',
     )
 
     class Meta:
-        verbose_name = "Subscription"
-        verbose_name_plural = "Subscriptions"
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'
         constraints = [
             models.UniqueConstraint(
                 fields=['follower', 'author'], name='unique_follow_pair')
