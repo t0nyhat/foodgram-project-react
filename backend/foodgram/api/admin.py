@@ -4,8 +4,6 @@ from .models import Cart, Favorite, Ingredient, IngredientAmount, Recipe, Tag
 
 
 class IngredientInRecipeAdmin(admin.TabularInline):
-    """Класс для отображения таблицы c ингредиентами в админке рецепта."""
-
     model = IngredientAmount
     fk_name = "recipe"
 
@@ -14,17 +12,13 @@ class IngredientInRecipeAdmin(admin.TabularInline):
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ("author", "name", "favorited")
     list_filter = ("author", "name", "tags")
-    exclude = ("ingredients",)
 
     inlines = [
         IngredientInRecipeAdmin,
     ]
 
     def favorited(self, obj):
-        favorited_count = Favorite.objects.filter(recipe=obj).count()
-        return favorited_count
-
-    favorited.short_description = "В избранном"
+        return Favorite.objects.filter(recipe=obj).count()
 
 
 @admin.register(Ingredient)
@@ -36,9 +30,6 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ("name", "color", "slug")
-    prepopulated_fields = {
-        "slug": ("name",),
-    }
 
 
 @admin.register(Cart)

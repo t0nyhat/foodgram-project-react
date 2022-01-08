@@ -11,7 +11,8 @@ from .paginator import Paginator
 from .permissions import OwnerOrReadOnly
 from .serializers import (CartSerializer, FavoriteRecipeSerializer,
                           FavoriteSerializer, IngredientSerializer,
-                          ReceipeSerializer, TagSerializer)
+                          ReceipeCreateSerializer, ReceipeSerializer,
+                          TagSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,12 +36,17 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     permission_classes = (OwnerOrReadOnly,)
     pagination_class = Paginator
     filterset_class = RecipeFilter
+    http_method_names = ['get', 'post', 'head', 'put', 'delete']
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'create', 'update']:
+            return ReceipeCreateSerializer
+        return ReceipeSerializer
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
 
-    @action(
-        detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -55,14 +61,11 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     def delete_favorite(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
-        favorite = get_object_or_404(
-            Favorite, user=user, recipe=recipe
-        )
+        favorite = get_object_or_404(Favorite, user=user, recipe=recipe)
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -77,43 +80,37 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     def delete_shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
-        favorite = get_object_or_404(
-            Cart, user=user, recipe=recipe
-        )
+        favorite = get_object_or_404(Cart, user=user, recipe=recipe)
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['GET'],
+            permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
         recipes = Recipe.objects.filter(cart__user=user)
-        queryset = IngredientAmount.objects.filter(recipe_id__in=recipes)
-        shopping_list = {}
         list_shop = ''
+        ingredient_list = '\ningredients:'
         for recipe in recipes.values('id', 'name', 'text', 'cooking_time'):
 
-            list_shop += '\t'.join([f'{key}:{value}' for key,
-                                   value in recipe.items() if key != 'id'])
+            list_shop += '\n'.join(
+                [f'{key}: {value}' for key,
+                 value in recipe.items() if key != 'id']
+            )
             ingredients = IngredientAmount.objects.filter(
                 recipe_id=recipe['id'])
-            print(ingredients.values())
+            for item in ingredients:
+                ingredient_list += (f' {item.ingredient}'
+                                    + f'{item.amount}'
+                                    + f'{item.ingredient.measurement_unit}'
+                                    + '\n\t\t\t')
+            list_shop += ingredient_list + '\n------------------------\n'
+            ingredient_list = '\ningredients:'
 
-        print(list_shop)
-
-        for ingredient in queryset:
-            name = ingredient.ingredient.name
-            amount = ingredient.amount
-            if name in shopping_list:
-                shopping_list[name] = shopping_list[name] + amount
-            else:
-                shopping_list[name] = amount
-        plain_list = ''
-        for item in shopping_list.keys():
-            plain_list += f'{item}: {shopping_list[item]}\n'
-        response = HttpResponse(plain_list,
-                                content_type='text/plain; charset=utf-8')
+        response = HttpResponse(
+            list_shop, content_type='text/plain; charset=utf-8')
         filename = 'shopping_list.txt'
-        response['Content-Disposition'] = ('attachment; filename={0}'.
-                                           format(filename))
-        return HttpResponse(response)
+        response['Content-Disposition'] = 'attachment; filename={0}'.format(
+            filename)
+
+        return response
