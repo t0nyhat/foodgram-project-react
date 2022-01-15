@@ -12,3 +12,14 @@
 readme допишу при деплое, пока по коду пройдусь
 скачивание корзины мне все-равно не нравится
 по фронту не работет измененние рецепта, понять не могу почему
+
+
+
+----
+.env
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
