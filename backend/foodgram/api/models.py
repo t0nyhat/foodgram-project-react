@@ -77,7 +77,7 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Publication date',
     )
-     #slug = AutoSlugField(unique=True, populate_from='name',
+     # slug = AutoSlugField(unique=True, populate_from='name',
      #                    verbose_name='Recipe slug')
 
     class Meta:
