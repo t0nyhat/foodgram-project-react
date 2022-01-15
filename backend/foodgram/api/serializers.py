@@ -53,18 +53,7 @@ class ReceipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'name',
-            'text',
-            'image',
-            'ingredients',
-            'cooking_time',
-            'is_favorited',
-            'is_in_shopping_cart',
-        )
+        fields = '__all__'
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
@@ -77,30 +66,6 @@ class ReceipeSerializer(serializers.ModelSerializer):
         if request is None or request.user.is_anonymous:
             return False
         return Cart.objects.filter(user=request.user, recipe=obj).exists()
-
-
-class ReceipeCreateSerializer(ReceipeSerializer):
-    image = Base64ImageField()
-    author = UserSerializer(read_only=True)
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientAmountSerializer(
-        many=True,
-        read_only=True,
-        source='ingredientamount_set',
-    )
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'name',
-            'text',
-            'image',
-            'ingredients',
-            'cooking_time',
-        )
 
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
@@ -151,7 +116,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ('user', 'recipe')
+        fields = '__all__'
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
@@ -167,7 +132,7 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ('user', 'recipe')
+        fields = '__all__'
         validators = [
             UniqueTogetherValidator(
                 queryset=Cart.objects.all(),

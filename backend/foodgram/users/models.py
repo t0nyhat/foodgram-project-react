@@ -12,11 +12,11 @@ class User(AbstractUser):
     ]
     first_name = models.CharField(
         'first_name',
-        max_length=150, )
+        max_length=150,)
 
     last_name = models.CharField(
         'last_name',
-        max_length=150, )
+        max_length=150,)
 
     username = models.CharField(
         'username',
@@ -39,7 +39,7 @@ class User(AbstractUser):
         'role',
         max_length=len(max((role_pair[1] for role_pair in CHOICES), key=len)),
         choices=CHOICES,
-        default=USER
+        default=USER,
     )
 
     def __str__(self):
@@ -71,6 +71,9 @@ class Follow(models.Model):
         verbose_name='autor',
         help_text='select user',
     )
+
+    def __str__(self):
+        return f'{self.follower} follows {self.author}'
 
     class Meta:
         verbose_name = 'Subscription'

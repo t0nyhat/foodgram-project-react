@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
@@ -11,22 +12,22 @@ from .paginator import Paginator
 from .permissions import OwnerOrReadOnly
 from .serializers import (CartSerializer, FavoriteRecipeSerializer,
                           FavoriteSerializer, IngredientSerializer,
-                          ReceipeCreateSerializer, ReceipeSerializer,
-                          TagSerializer)
+                          ReceipeSerializer, TagSerializer)
 
 
-class TagViewSet(viewsets.ReadOnlyModelViewSet):
+class BaseViewSet(viewsets.ReadOnlyModelViewSet):
+    pagination_class = None
+    permission_classes = (AllowAny,)
+
+
+class TagViewSet(BaseViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
-    permission_classes = (AllowAny,)
 
 
-class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = IngredientSerializer
+class IngredientViewSet(BaseViewSet):
     queryset = Ingredient.objects.all()
-    pagination_class = None
-    permission_classes = (AllowAny,)
+    serializer_class = IngredientSerializer
     filterset_class = IngredientNameFilter
 
 
@@ -37,11 +38,6 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     pagination_class = Paginator
     filterset_class = RecipeFilter
     http_method_names = ['get', 'post', 'head', 'put', 'delete']
-
-    def get_serializer_class(self):
-        if self.action in ['list', 'create', 'update']:
-            return ReceipeCreateSerializer
-        return ReceipeSerializer
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
@@ -88,24 +84,29 @@ class ReceipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        recipes = Recipe.objects.filter(cart__user=user)
-        list_shop = ''
-        ingredient_list = '\ningredients:'
-        for recipe in recipes.values('id', 'name', 'text', 'cooking_time'):
 
-            list_shop += '\n'.join(
-                [f'{key}: {value}' for key,
-                 value in recipe.items() if key != 'id']
-            )
+        recipes = Recipe.objects.filter(purchase__user=user).annotate(
+            recipe_name=F('name'),
+            recipe_text=F('text'),
+            recipe_cooking_time=F('cooking_time'),
+        )
+        list_shop = ''
+        ingredient_list = 'Ингредиенты:'
+        for recipe in recipes:
+            list_shop += (f'Имя рецепта: {recipe.recipe_name}\n'
+                          + f'Описание: {recipe.recipe_text}\n'
+                          + f'Время приготовления: {recipe.cooking_time}\n'
+                          )
             ingredients = IngredientAmount.objects.filter(
-                recipe_id=recipe['id'])
+                recipe_id=recipe.id)
+
             for item in ingredients:
                 ingredient_list += (f' {item.ingredient}'
                                     + f'{item.amount}'
                                     + f'{item.ingredient.measurement_unit}'
                                     + '\n\t\t\t')
             list_shop += ingredient_list + '\n------------------------\n'
-            ingredient_list = '\ningredients:'
+            ingredient_list = 'Ингредиенты:'
 
         response = HttpResponse(
             list_shop, content_type='text/plain; charset=utf-8')

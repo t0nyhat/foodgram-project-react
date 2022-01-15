@@ -1,6 +1,7 @@
+from autoslug import AutoSlugField
 from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
@@ -8,16 +9,11 @@ User = get_user_model()
 
 class Tag(models.Model):
 
-    name = models.CharField(max_length=200, unique=True)
-    color = ColorField(default='#FF0000')
-    slug = models.SlugField(
-        unique=True,
-        validators=[
-            RegexValidator(
-                regex=r'^[-a-zA-Z0-9_]+$',
-                message='Unable to create a tag',
-            ),
-        ])
+    name = models.CharField(max_length=200, unique=True,
+                            verbose_name='Tag name')
+    color = ColorField(default='#000000', verbose_name='Tag color')
+    slug = AutoSlugField(unique=True, populate_from='name',
+                         verbose_name='Tag slug')
 
     class Meta:
         verbose_name = 'Tag'
@@ -81,6 +77,8 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Publication date',
     )
+     #slug = AutoSlugField(unique=True, populate_from='name',
+     #                    verbose_name='Recipe slug')
 
     class Meta:
         ordering = ('-pub_date',)
@@ -90,17 +88,25 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
+    def list_tags(self):
+        return list(self.tags.values_list('name', flat=True))
+
+    def list_ingredients(self):
+        return list(self.ingredients.values_list('name', flat=True))
+
 
 class IngredientAmount(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ingredient',
+        related_name='recipe_ingredients',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Recipe',
+        related_name='recipe_ingredients',
     )
     amount = models.PositiveSmallIntegerField(
         validators=(
@@ -146,19 +152,20 @@ class Cart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='cart',
+        related_name='buyer',
         verbose_name='User',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='cart',
+        related_name='purchase',
         verbose_name='Recipe',
     )
 
     class Meta:
         ordering = ['-id']
         verbose_name = 'Cart'
+        verbose_name_plural = 'Carts'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique_cart_user_recipes')

@@ -26,7 +26,7 @@ SECRET_KEY = 'qt3nxip)7c5+7%*ml8i#_h1e^ua8xor7@15#r(d5l$@-o+=wg*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -122,9 +122,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
-
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -148,7 +145,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS':
         'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 4
+    'PAGE_SIZE': 4,
+    'EXCEPTION_HANDLER': 'api.utils.custom_exception_handler.custom_exception_handler'
 }
 DJOSER = {
     "SERIALIZERS": {
