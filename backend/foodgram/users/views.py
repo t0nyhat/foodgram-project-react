@@ -33,7 +33,8 @@ class UserViewSet(UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['POST'],
+            permission_classes=[permissions.IsAuthenticated])
     def subscribe(self, request, id=None):
         follower = request.user
         author = get_object_or_404(User, id=id)
