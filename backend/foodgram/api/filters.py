@@ -1,7 +1,7 @@
 import django_filters as filters
 from django.contrib.auth import get_user_model
 
-from .models import Ingredient, Recipe
+from .models import Ingredient, Recipe, Tag
 
 User = get_user_model()
 
@@ -15,9 +15,11 @@ class IngredientNameFilter(filters.FilterSet):
 
 
 class RecipeFilter(filters.FilterSet):
-    tags = filters.AllValuesMultipleFilter(
-        field_name='tags__slug'
-    )
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        queryset=Tag.objects.all(),
+        to_field_name='slug')
+    
     is_favorited = filters.BooleanFilter(
         method='get_is_favorited'
     )

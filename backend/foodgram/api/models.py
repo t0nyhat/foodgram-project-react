@@ -1,7 +1,8 @@
+
 from autoslug import AutoSlugField
 from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 User = get_user_model()
@@ -35,6 +36,8 @@ class Ingredient(models.Model):
 
     class Meta:
         ordering = ('name',)
+        verbose_name = 'Ingredient'
+        verbose_name_plural = 'Ingredients'
 
     def __str__(self):
         return self.name
@@ -77,8 +80,6 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Publication date',
     )
-     # slug = AutoSlugField(unique=True, populate_from='name',
-     #                    verbose_name='Recipe slug')
 
     class Meta:
         ordering = ('-pub_date',)
@@ -100,13 +101,11 @@ class IngredientAmount(models.Model):
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ingredient',
-        related_name='recipe_ingredients',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Recipe',
-        related_name='recipe_ingredients',
     )
     amount = models.PositiveSmallIntegerField(
         validators=(

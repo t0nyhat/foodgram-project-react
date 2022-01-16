@@ -37,12 +37,11 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     permission_classes = (OwnerOrReadOnly,)
     pagination_class = Paginator
     filterset_class = RecipeFilter
-    http_method_names = ['get', 'post', 'head', 'put', 'delete']
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -61,7 +60,7 @@ class ReceipeViewSet(viewsets.ModelViewSet):
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
