@@ -41,7 +41,8 @@ class ReceipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['POST'],
+            permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -60,7 +61,8 @@ class ReceipeViewSet(viewsets.ModelViewSet):
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['POST'],
+            permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -83,32 +85,30 @@ class ReceipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-
-        recipes = Recipe.objects.filter(purchase__user=user).annotate(
-            recipe_name=F('name'),
-            recipe_text=F('text'),
-            recipe_cooking_time=F('cooking_time'),
+        all_ingredients = IngredientAmount.objects.filter(
+            recipe__purchase__user=user).annotate(
+            recipe_name=F('recipe__name'),
+            recipe_text=F('recipe__text'),
+            recipe_cooking_time=F('recipe__cooking_time'),
+            ingredient_name=F('ingredient__name'),
+            ingredient_amount=F('amount'),
+            ingredient_measurement=F('ingredient__measurement_unit')
         )
-        list_shop = ''
-        ingredient_list = 'Ингредиенты:'
-        for recipe in recipes:
-            list_shop += (f'Имя рецепта: {recipe.recipe_name}\n'
-                          + f'Описание: {recipe.recipe_text}\n'
-                          + f'Время приготовления: {recipe.cooking_time}\n'
-                          )
-            ingredients = IngredientAmount.objects.filter(
-                recipe_id=recipe.id)
-
-            for item in ingredients:
-                ingredient_list += (f' {item.ingredient}'
-                                    + f'{item.amount}'
-                                    + f'{item.ingredient.measurement_unit}'
-                                    + '\n\t\t\t')
-            list_shop += ingredient_list + '\n------------------------\n'
-            ingredient_list = 'Ингредиенты:'
+        list = ''
+        recipe_name = ''
+        for ing in all_ingredients:
+            if recipe_name != ing.recipe_name:
+                list += ('______________\n'
+                         + f'Имя рецепта: {ing.recipe_name}\n'
+                         + f'Описание: {ing.recipe_text}\n'
+                         + f'Время приготовления: {ing.recipe.cooking_time}\n')
+                recipe_name = ing.recipe_name
+            list += (f'Название ингредиента: {ing.ingredient_name}'
+                     + f' {ing.amount}{ing.ingredient_measurement}\n'
+                     )
 
         response = HttpResponse(
-            list_shop, content_type='text/plain; charset=utf-8')
+            list, content_type='text/plain; charset=utf-8')
         filename = 'shopping_list.txt'
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             filename)

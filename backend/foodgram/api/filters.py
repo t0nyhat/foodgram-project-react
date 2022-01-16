@@ -19,7 +19,7 @@ class RecipeFilter(filters.FilterSet):
         field_name='tags__slug',
         queryset=Tag.objects.all(),
         to_field_name='slug')
-    
+
     is_favorited = filters.BooleanFilter(
         method='get_is_favorited'
     )
