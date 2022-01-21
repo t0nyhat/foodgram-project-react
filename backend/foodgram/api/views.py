@@ -1,3 +1,5 @@
+from functools import reduce
+
 from django.db.models import F
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -87,28 +89,23 @@ class ReceipeViewSet(viewsets.ModelViewSet):
         user = request.user
         all_ingredients = IngredientAmount.objects.filter(
             recipe__purchase__user=user).annotate(
-            recipe_name=F('recipe__name'),
-            recipe_text=F('recipe__text'),
-            recipe_cooking_time=F('recipe__cooking_time'),
             ingredient_name=F('ingredient__name'),
             ingredient_amount=F('amount'),
             ingredient_measurement=F('ingredient__measurement_unit')
         )
-        list = ''
-        recipe_name = ''
+        list = {}
         for ing in all_ingredients:
-            if recipe_name != ing.recipe_name:
-                list += ('______________\n'
-                         + f'Имя рецепта: {ing.recipe_name}\n'
-                         + f'Описание: {ing.recipe_text}\n'
-                         + f'Время приготовления: {ing.recipe.cooking_time}\n')
-                recipe_name = ing.recipe_name
-            list += (f'Название ингредиента: {ing.ingredient_name}'
-                     + f' {ing.amount}{ing.ingredient_measurement}\n'
-                     )
+            key = f'{ing.ingredient_name},{ing.ingredient_measurement}'
+            if key in list:
+                list[key] = list[key] + ing.ingredient_amount
+            else:
+                list[key] = ing.ingredient_amount
+
+        cart_txt = reduce(lambda x, key: x + key + '-'
+                          + str(list[key]) + '\n', list, '')
 
         response = HttpResponse(
-            list, content_type='text/plain; charset=utf-8')
+            cart_txt, content_type='text/plain; charset=utf-8')
         filename = 'shopping_list.txt'
         response['Content-Disposition'] = 'attachment; filename={0}'.format(
             filename)

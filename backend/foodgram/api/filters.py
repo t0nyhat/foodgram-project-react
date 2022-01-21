@@ -15,16 +15,25 @@ class IngredientNameFilter(filters.FilterSet):
 
 
 class RecipeFilter(filters.FilterSet):
+    IN = 1
+    OUT = 0
+    CHOICES = (
+        (IN, 1),
+        (OUT, 0),
+    )
     tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         queryset=Tag.objects.all(),
         to_field_name='slug')
 
-    is_favorited = filters.BooleanFilter(
-        method='get_is_favorited'
+    is_favorited = filters.ChoiceFilter(
+        method='get_is_favorited',
+        choices=CHOICES
     )
-    is_in_shopping_cart = filters.BooleanFilter(
-        method='get_is_in_shopping_cart'
+    filters.ChoiceFilter
+    is_in_shopping_cart = filters.ChoiceFilter(
+        method='get_is_in_shopping_cart',
+        choices=CHOICES
     )
 
     class Meta:

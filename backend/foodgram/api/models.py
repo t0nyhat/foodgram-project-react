@@ -2,10 +2,19 @@
 from autoslug import AutoSlugField
 from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
+
+
+def validate_nonzero(value):
+    if value <= 0:
+        raise ValidationError(
+            'Убедитесь, что значение больше 0',
+            params={'value': value},
+        )
 
 
 class Tag(models.Model):
@@ -74,7 +83,7 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveIntegerField(
         verbose_name='Cooking time',
-        validators=[MinValueValidator(1, message='at least 1')],
+        validators=[MinValueValidator(0), validate_nonzero],
     )
     pub_date = models.DateTimeField(
         auto_now_add=True,
@@ -108,9 +117,7 @@ class IngredientAmount(models.Model):
         verbose_name='Recipe',
     )
     amount = models.PositiveSmallIntegerField(
-        validators=(
-            MinValueValidator(
-                1, message='Minimum 1'),),
+        validators=[MinValueValidator(0), validate_nonzero],
         verbose_name='Quantity',
     )
 

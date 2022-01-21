@@ -58,22 +58,32 @@ class ReceipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
-            return False
-        return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+            return 0
+        return int(Favorite.objects.filter(
+            user=request.user, recipe=obj).exists())
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
-            return False
-        return Cart.objects.filter(user=request.user, recipe=obj).exists()
+            return 0
+        return int(Cart.objects.filter(user=request.user, recipe=obj).exists())
 
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
+        if ingredients is None:
+            raise serializers.ValidationError(
+                {'ingredients': 'Ingredients это необходимое поле'}
+            )
+        for ingredient in ingredients:
+            if int(ingredient.get('amount')) <= 0:
+                raise serializers.ValidationError(
+                    {'amount': 'Количество ингредиента '
+                     'должно быть положительным'})
         ingredients = {x['id']: x for x in ingredients}.values()
         tags = self.initial_data.get('tags')
         if tags is None:
             raise serializers.ValidationError(
-                'Tag is Required field',
+                {'tags': 'Tag это необходимое поле'}
             )
         data['ingredients'] = ingredients
         data['tags'] = tags
@@ -101,7 +111,7 @@ class ReceipeSerializer(serializers.ModelSerializer):
         instance.tags.add(*tags)
         ingredients_data = validated_data.pop('ingredients')
         IngredientAmount.objects.filter(recipe=instance).delete()
-        instance.image = validated_data.get('image')
+        instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name')
         instance.text = validated_data.get('text')
         instance.cooking_time = validated_data.get('cooking_time')
