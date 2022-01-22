@@ -68,8 +68,7 @@
 
   - `docker-compose up -d --build` - собираем и запускаем инфраструктуру
   - `docker-compose exec backend python manage.py migrate --noinput` - выполняем миграции
-  - `docker-compose exec web python manage.py createsuperuser` - создаем суперпользователя
-  - `docker-compose exec web python manage.py collectstatic --no-input` - собираем статику
+  - `docker-compose exec backend python manage.py collectstatic --no-input` - собираем статику
   - `docker-compose exec backend python manage.py loaddata fixtures.json` - загружаем тестовые данные
 
 ## в тестовых данных созданы:
